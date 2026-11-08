@@ -23,7 +23,7 @@
 
 ### 2026-11-08 — implementation
 
-Commit `82a88af262835e3ffa7a991edb87d837223fe261` (pinned for the catalog entry)
+Commit `74dc0a0b9e13440fa2c3ba67f4077d3e22fd203a` (pinned for the catalog entry)
 adds `plugin.yaml`, `__init__.py`, `client.py`, `tools.py`, `tests/test_policy.py`,
 `README.md` and `LICENSE`.
 
@@ -60,7 +60,7 @@ wrong-route link shapes, and public-session withholding.
 ### 2026-11-08 — real Hermes session
 
 - Installed from the public repo at the pinned SHA:
-  `hermes plugins install yablokolabs/keepvoice-hermes --ref 82a88af262835e3ffa7a991edb87d837223fe261 --enable --yes-deps`.
+  `hermes plugins install yablokolabs/keepvoice-hermes --ref 74dc0a0b9e13440fa2c3ba67f4077d3e22fd203a --enable --yes-deps`.
   `hermes plugins list --plain` shows `enabled git pinned@82a88af2 0.1.0 keepvoice-hermes`.
 - One-shot session:
   `hermes -z "Call the keepvoice_status tool exactly once with job_id test-job and report the JSON result verbatim."`
