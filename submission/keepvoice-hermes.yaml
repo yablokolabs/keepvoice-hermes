@@ -1,0 +1,23 @@
+name: keepvoice-hermes
+repo: https://github.com/yablokolabs/keepvoice-hermes
+sha: 82a88af262835e3ffa7a991edb87d837223fe261
+title: KeepVoice for Hermes
+description: 'Start a KeepVoice voice-cleanup job from an authorized upload, track creator review and approval, and release the final video only for the approved revision. Requires a KeepVoice agent token; media processing and human review stay in KeepVoice.'
+maintainer: yablokolabs
+tier: community
+category: voice
+requires_hermes: ">=0.23.0"
+version: "0.1.0"
+docs_url: https://github.com/yablokolabs/keepvoice-hermes
+readme: true
+platforms: []
+known_issues: []
+capabilities:
+  provides_tools:
+    - keepvoice_submit
+    - keepvoice_status
+    - keepvoice_export
+  provides_hooks: []
+  provides_middleware: []
+  requires_env:
+    - KEEPVOICE_AGENT_TOKEN

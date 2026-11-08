@@ -47,6 +47,12 @@ limit failures, stale approval, missing artifact, foreign-origin and wrong-route
 artifact links, and withholding the link on a public surface. They need no
 credentials and make no network calls.
 
+A real Hermes 0.23.0 session invoked `keepvoice_status` through the registered
+tool after installing this repository at the pinned SHA, proving registration,
+schema and dispatch. The consented live job (upload, submit, review, approve,
+export) is run by the operator with their own token and clip; see
+`docs/PROGRESS.md`.
+
 ## Catalog rule 13 disclosures
 
 - HTTPS requests only to `https://keepvoice.yablokolabs.com`, two fixed routes:
