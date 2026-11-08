@@ -1,0 +1,14 @@
+name: keepvoice-hermes
+version: 0.1.0
+description: "KeepVoice voice-cleanup jobs in Hermes: submit an authorized upload, track creator review, and release the export only after the current revision is approved."
+author: yablokolabs
+requires_hermes: ">=0.23.0"
+requires_env:
+  - name: KEEPVOICE_AGENT_TOKEN
+    description: "KeepVoice agent API bearer token (agent scope, required for submission and status)."
+    url: "https://keepvoice.yablokolabs.com"
+    secret: true
+provides_tools:
+  - keepvoice_submit
+  - keepvoice_status
+  - keepvoice_export
