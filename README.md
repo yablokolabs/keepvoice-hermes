@@ -135,14 +135,32 @@ artifact links, redirect refusal, rate limiting and public-session withholding.
 
 ## Reuse and license
 
-This plugin is new work. It reuses the KeepVoice HTTP contract from
-`docs/API_CONTRACT.md` and `docs/openapi.snapshot.json`, and carries the MIT
-license notice from the reference implementation at
-[`yablokolabs/keepvoice`](https://github.com/yablokolabs/keepvoice). No source
-code from that repository is copied: its package handles local separation with
-Demucs, torch and ffmpeg, and this plugin deliberately runs no media processing.
-There are no bundled executables, assets or third-party libraries. See
-[LICENSE](LICENSE).
+This plugin is new work, but it follows the service implementation at
+[`yablokolabs/keepvoice`](https://github.com/yablokolabs/keepvoice) rather than
+inventing its own contract:
+
+- `server/schemas.py` defines the submission, job, approval and artifact shapes,
+  including the 32-lowercase-hex upload ID and the 5-500 character provenance.
+  The plugin validates those bounds locally before any request.
+- `server/artifacts.py` (`ArtifactSigner`) defines the signed route
+  `<base>/v1/artifacts/<job_id>/<name>`. The export gate accepts only that exact
+  route on HTTPS with no user information, port or fragment, which is why a link
+  for another job or artifact is withheld.
+- `server/app.py` and `docs/api/AGENTO.md` define the lifecycle
+  (`queued` → `processing` → `needs_review` → `finalizing` → `completed`, plus
+  `failed` and `rejected`) and the error envelope. `client.py` reads the stable
+  `error.code` from that envelope (`upload_consumed`, `idempotency_conflict`,
+  `queue_full`, `upload_expired`, and so on) and ignores unknown codes, falling
+  back to the HTTP status.
+- `docs/api/openapi.json` in the service matches `docs/openapi.snapshot.json`
+  here and the deployed `/openapi.json`; the plugin's paths and fields were
+  checked against all three.
+
+No service source is copied or vendored. The plugin performs no media
+processing, imports no Demucs, torch, ffmpeg or FastAPI code, and has no Python
+dependencies. It carries the same MIT license notice as the service, with
+copyright Yabloko Labs, in [LICENSE](LICENSE). There are no bundled executables,
+assets or third-party libraries.
 
 ## Limits
 

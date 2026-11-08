@@ -79,10 +79,28 @@ wrong-route link shapes, and public-session withholding.
   `keepvoice_status`, approve in KeepVoice and run `keepvoice_export`. Record the
   observed states and check the exported video before opening the catalog PR.
 
-## Reference reuse
+### 2026-11-08 — contract alignment with the service checkout
 
-The plugin reuses the KeepVoice API contract (`docs/API_CONTRACT.md`,
-`docs/openapi.snapshot.json`) and carries the MIT notice from
-`yablokolabs/keepvoice` in `LICENSE`. No source code from that repository is
-copied: it performs local Demucs/torch/ffmpeg separation, which this plugin
-deliberately leaves to the KeepVoice service.
+Checked the plugin against the KeepVoice service source at
+`/home/azureuser/keepvoice` and its local API container (`127.0.0.1:8080`,
+healthy):
+
+- `server/schemas.py` confirms the upload ID pattern, provenance bounds and job,
+  approval and artifact shapes already used by the plugin.
+- `server/artifacts.py` (`ArtifactSigner`) signs
+  `<base>/v1/artifacts/<job_id>/<name>`; `final_video` maps to `final.mp4`. The
+  export gate accepts only that route on HTTPS, so the check is unchanged and
+  now documented against the signer.
+- `docs/api/openapi.json`, the deployed `/openapi.json` and
+  `docs/openapi.snapshot.json` have identical paths and schemas (10 paths).
+- Tightened `JOB_ID_RE` to the service's 32-lowercase-hex ID form.
+- `client.py` now reads the stable code from the service error envelope
+  (`{"error": {"code", ...}}`) and surfaces allowlisted codes
+  (`upload_consumed`, `idempotency_conflict`, `upload_expired`, `queue_full`, …),
+  falling back to the HTTP status for unknown codes.
+- Re-ran: 31 tests `OK`; `hermes plugins doctor . --ci` exit 0 (3 tools, 0
+  hooks); `hermes plugins validate . --install-deps` `Validation passed.`
+
+Reuse remains contract-level. No service source is copied or vendored, and the
+plugin has no Python dependencies or media processing. The MIT notice from
+`yablokolabs/keepvoice` is carried in `LICENSE`.

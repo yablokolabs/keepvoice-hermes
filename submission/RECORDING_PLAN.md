@@ -19,3 +19,13 @@ you are authorized to share. Keep the before/after audio audible.
 
 Sanitize every capture: blur the token, the signed URL query, reviewer identity
 if not yours, and any private transcript. Keep signed links out of the upload.
+
+## Test media provenance
+
+The service repository ships a rights-cleared fixture for this purpose:
+`keepvoice/tests/fixtures/fixture.mp4` (18 seconds, project-owned demo voiceover
+plus a synthesized music bed). Its recorded provenance in the service end-to-end
+script is: "Repository demo voiceover plus synthesized music bed; project-owned
+rights-cleared fixture". Use that clip and that wording unless you have a better
+consented source. The large camera clips in the checkout are not cleared for
+public publication.

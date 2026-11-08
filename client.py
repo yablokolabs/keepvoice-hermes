@@ -9,6 +9,7 @@ artifact or download link.
 from __future__ import annotations
 
 import json
+import re
 import socket
 import urllib.error
 import urllib.parse
@@ -28,6 +29,36 @@ DEFAULT_TIMEOUT_S = 15.0
 MAX_TIMEOUT_S = 30.0
 
 MAX_RETRY_AFTER_S = 3600
+MAX_ERROR_BODY_BYTES = 4096
+
+# Stable codes from the KeepVoice error envelope (server/errors.py, docs/api/AGENTO.md).
+# Any other server code is ignored and the HTTP status mapping is used instead.
+_SERVER_ERROR_CODES = frozenset(
+    {
+        "unauthorized",
+        "reviewer_required",
+        "artifact_link_invalid",
+        "job_not_found",
+        "upload_not_found",
+        "upload_expired",
+        "upload_consumed",
+        "idempotency_conflict",
+        "approval_conflict",
+        "invalid_state",
+        "stale_revision",
+        "stale_subtitles",
+        "stale_music",
+        "upload_too_large",
+        "invalid_media",
+        "invalid_music",
+        "invalid_subtitles",
+        "music_rights_required",
+        "source_rights_required",
+        "queue_full",
+        "human_confirmation_required",
+    }
+)
+_SERVER_CODE_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 
 
 class ClientError(Exception):
@@ -109,7 +140,12 @@ def request_json(
         result = active_opener.open(request, timeout=timeout)
     except urllib.error.HTTPError as exc:
         status = int(getattr(exc, "code", 0) or 0)
-        raise _error_for_status(status, getattr(exc, "headers", None)) from None
+        raw = b""
+        try:
+            raw = exc.read(MAX_ERROR_BODY_BYTES)
+        except Exception:
+            raw = b""
+        raise _error_for_status(status, getattr(exc, "headers", None), raw) from None
     except (urllib.error.URLError, socket.timeout, TimeoutError, OSError):
         raise ClientError(
             "network_error",
@@ -118,7 +154,7 @@ def request_json(
 
     status = int(getattr(result, "status", 0) or 0)
     if not 200 <= status < 300:
-        raise _error_for_status(status, getattr(result, "headers", None))
+        raise _error_for_status(status, getattr(result, "headers", None), b"")
 
     try:
         raw = result.read(MAX_RESPONSE_BYTES + 1)
@@ -141,7 +177,8 @@ def request_json(
     return Response(status=status, body=payload)
 
 
-def _error_for_status(status: int, headers: Any) -> ClientError:
+def _error_for_status(status: int, headers: Any, raw: bytes = b"") -> ClientError:
+    server_code = _server_error_code(raw)
     if 300 <= status < 400:
         return ClientError(
             "redirect_refused",
@@ -149,23 +186,54 @@ def _error_for_status(status: int, headers: Any) -> ClientError:
             status=status,
         )
     if status in (401, 403):
-        return ClientError("auth_failed", "KeepVoice rejected the agent credential.", status=status)
+        return ClientError(
+            server_code or "auth_failed", "KeepVoice rejected the agent credential.", status=status
+        )
     if status == 404:
-        return ClientError("not_found", "KeepVoice has no such upload or job for this credential.", status=status)
+        return ClientError(
+            server_code or "not_found",
+            "KeepVoice has no such upload or job for this credential.",
+            status=status,
+        )
     if status == 409:
-        return ClientError("conflict", "KeepVoice reported a consumed upload or an idempotency conflict.", status=status)
+        return ClientError(
+            server_code or "conflict",
+            "KeepVoice reported a state or idempotency conflict.",
+            status=status,
+        )
     if status == 422:
-        return ClientError("invalid_request", "KeepVoice rejected the request body.", status=status)
+        return ClientError(
+            server_code or "invalid_request", "KeepVoice rejected the request body.", status=status
+        )
     if status == 429:
         return ClientError(
-            "rate_limited",
+            server_code or "rate_limited",
             "KeepVoice is not accepting this request right now.",
             status=status,
             retry_after=_retry_after(headers),
         )
     if status >= 500:
-        return ClientError("backend_error", "KeepVoice returned a server error.", status=status)
-    return ClientError("http_error", f"KeepVoice returned HTTP {status}.", status=status)
+        return ClientError(
+            server_code or "backend_error", "KeepVoice returned a server error.", status=status
+        )
+    return ClientError(server_code or "http_error", f"KeepVoice returned HTTP {status}.", status=status)
+
+
+def _server_error_code(raw: bytes) -> Optional[str]:
+    """Read the stable code from KeepVoice's error envelope, if it is one we know."""
+    if not raw:
+        return None
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, ValueError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    error = payload.get("error")
+    code = error.get("code") if isinstance(error, dict) else None
+    if isinstance(code, str) and _SERVER_CODE_RE.match(code) and code in _SERVER_ERROR_CODES:
+        return code
+    return None
 
 
 def _retry_after(headers: Any) -> Optional[int]:

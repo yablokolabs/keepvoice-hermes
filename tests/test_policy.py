@@ -23,7 +23,7 @@ import client  # noqa: E402
 import tools  # noqa: E402
 
 UPLOAD_ID = "9b3d1f0b6c2a4e5f8a7d0c1b2e3f4a5b"
-JOB_ID = "job_7c1f2a9b"
+JOB_ID = "e36200813a884b74b056e4820addd352"
 TOKEN = "test-token-not-real"
 ARTIFACT_URL = f"https://keepvoice.yablokolabs.com/v1/artifacts/{JOB_ID}/final_video.mp4?sig=redacted"
 
@@ -256,7 +256,7 @@ class StatusChecks(unittest.TestCase):
         self.assertEqual(opener.requests, [])
 
     def test_status_rejects_a_foreign_job_id_in_the_response(self):
-        opener = FakeOpener(FakeResponse(200, job(job_id="job_other")))
+        opener = FakeOpener(FakeResponse(200, job(job_id="f" * 32)))
         result = tools.status(TOKEN, JOB_ID, opener=opener)
         self.assertEqual(result["code"], "invalid_response")
 
@@ -304,7 +304,7 @@ class ExportChecks(unittest.TestCase):
             f"https://keepvoice.yablokolabs.com.evil.example/v1/artifacts/{JOB_ID}/final_video.mp4",
             f"https://keepvoice.yablokolabs.com:8443/v1/artifacts/{JOB_ID}/final_video.mp4",
             f"https://user:pass@keepvoice.yablokolabs.com/v1/artifacts/{JOB_ID}/final_video.mp4",
-            f"https://keepvoice.yablokolabs.com/v1/artifacts/job_other/final_video.mp4",
+            f"https://keepvoice.yablokolabs.com/v1/artifacts/{'f' * 32}/final_video.mp4",
             f"https://keepvoice.yablokolabs.com/v1/artifacts/{JOB_ID}/other.mp4",
             f"https://keepvoice.yablokolabs.com/v1/artifacts/{JOB_ID}/final_video.mp4#frag",
         ]
@@ -364,6 +364,20 @@ class ClientChecks(unittest.TestCase):
             client.request_json("GET", f"/v1/jobs/{JOB_ID}", token=TOKEN, opener=opener)
         self.assertEqual(caught.exception.code, "rate_limited")
         self.assertEqual(caught.exception.retry_after, 30)
+
+    def test_server_error_codes_are_surfaced_and_unknown_ones_are_ignored(self):
+        consumed = json.dumps({"error": {"code": "upload_consumed", "message": "private prose"}}).encode()
+        opener = FakeOpener(http_error(409, consumed))
+        with self.assertRaises(client.ClientError) as caught:
+            client.request_json("GET", f"/v1/jobs/{JOB_ID}", token=TOKEN, opener=opener)
+        self.assertEqual(caught.exception.code, "upload_consumed")
+        self.assertNotIn("private prose", caught.exception.message)
+
+        unknown = json.dumps({"error": {"code": "made_up_code", "message": "x"}}).encode()
+        opener = FakeOpener(http_error(409, unknown))
+        with self.assertRaises(client.ClientError) as caught:
+            client.request_json("GET", f"/v1/jobs/{JOB_ID}", token=TOKEN, opener=opener)
+        self.assertEqual(caught.exception.code, "conflict")
 
     def test_oversized_and_malformed_responses_are_refused(self):
         opener = FakeOpener(FakeResponse(200, b"{" + b" " * (client.MAX_RESPONSE_BYTES + 1)))

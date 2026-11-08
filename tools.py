@@ -20,8 +20,9 @@ TOKEN_ENV = "KEEPVOICE_AGENT_TOKEN"
 IDEMPOTENCY_PREFIX = "keepvoice-hermes:"
 FINAL_ARTIFACT_KEY = "final_video"
 
+# Both IDs are 32 lowercase hex characters in the service (server/service.py, schemas.py).
 UPLOAD_ID_RE = re.compile(r"^[a-f0-9]{32}$")
-JOB_ID_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$")
+JOB_ID_RE = re.compile(r"^[a-f0-9]{32}$")
 ARTIFACT_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$")
 _CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
 
@@ -40,6 +41,21 @@ _RECOVERY = {
     "auth_failed": "Check KEEPVOICE_AGENT_TOKEN in the active Hermes profile and that it has agent API scope.",
     "not_found": "Check the upload or job ID, and that this credential owns it.",
     "invalid_request": "Correct the rights confirmation and source provenance; KeepVoice rejected the body.",
+    "upload_consumed": (
+        "That upload already produced a job. Reuse the existing job ID; one upload creates one job."
+    ),
+    "idempotency_conflict": (
+        "The same idempotency key was sent with a different body. Restore the original rights confirmation and "
+        "provenance for that upload; do not create a new key."
+    ),
+    "upload_expired": "That upload expired. Upload the clip again in KeepVoice and submit the new upload ID.",
+    "upload_not_found": "Check the upload ID, and that this credential owns it.",
+    "job_not_found": "Check the job ID, and that this credential owns it.",
+    "source_rights_required": (
+        "KeepVoice did not accept the rights confirmation. Ask the creator to confirm authorization explicitly."
+    ),
+    "queue_full": "KeepVoice's job queue is full. Retry after the stated delay.",
+    "artifact_link_invalid": ("KeepVoice rejected the artifact link, which is expired or tampered. Request a fresh export."),
     "backend_error": "KeepVoice returned a server error. Check its /health endpoint and retry.",
     "network_error": (
         "Could not reach KeepVoice. Check connectivity and retry. If a submission outcome is uncertain, "

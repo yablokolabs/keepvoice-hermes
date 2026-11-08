@@ -26,10 +26,15 @@ KeepVoice already separates speech from music, stores subtitles and runs
 browser-based human review. New here: the native Hermes integration, pre-network
 input validation, a stable idempotency key per upload, and a revision-aware
 export gate that fails closed. Media processing is untouched and stays in the
-service. The plugin implements the documented API contract and carries the MIT
-notice from `yablokolabs/keepvoice`; no source code from that repository is
-copied because it performs local Demucs/torch/ffmpeg processing that this plugin
-does not do.
+service.
+
+The plugin follows the service source rather than inventing a contract: the
+upload and job ID form and request bounds come from `server/schemas.py`, the
+accepted artifact route comes from `server/artifacts.py` (`ArtifactSigner`), and
+allowlisted error codes come from the service's `{"error": {"code": ...}}`
+envelope. No service source is copied or vendored; the plugin has no Python
+dependencies and does no media processing. It carries the same MIT notice
+(Yabloko Labs) as the service.
 
 ## Validation
 
