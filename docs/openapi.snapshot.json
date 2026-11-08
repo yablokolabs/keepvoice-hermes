@@ -1,0 +1,1504 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "KeepVoice Agento Processing API",
+    "description": "Asynchronous speech/music separation, editable subtitles, human review and optional replacement-music mixing for Agento. KeepVoice separation is reused project code. Output can retain separation artifacts or residual music and is never described as copyright-cleared or claim-free.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "operations"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Create Job",
+        "operationId": "create_job_v1_jobs_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_job_v1_jobs_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Upload exceeds the configured size limit."
+          },
+          "422": {
+            "description": "Invalid media, missing rights confirmation, or invalid options."
+          },
+          "429": {
+            "description": "Queue is full; retry later with Retry-After."
+          }
+        }
+      }
+    },
+    "/v1/uploads": {
+      "post": {
+        "tags": [
+          "uploads"
+        ],
+        "summary": "Create Upload",
+        "operationId": "create_upload_v1_uploads_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_create_upload_v1_uploads_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Upload exceeds the configured size limit."
+          },
+          "422": {
+            "description": "The file is not a supported video with audio."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/jobs/from-upload": {
+      "post": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Create Job From Upload",
+        "operationId": "create_job_from_upload_v1_jobs_from_upload_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[A-Za-z0-9._:-]+$",
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitJobIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown upload, or owned by another credential."
+          },
+          "409": {
+            "description": "Upload already consumed, or idempotency conflict."
+          },
+          "422": {
+            "description": "Missing rights confirmation or invalid provenance."
+          },
+          "429": {
+            "description": "Queue is full; retry later with Retry-After."
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Get Job",
+        "operationId": "get_job_v1_jobs__job_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job not found for this credential."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}/review": {
+      "patch": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Patch Review",
+        "operationId": "patch_review_v1_jobs__job_id__review_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale revision or job is no longer in needs_review."
+          },
+          "422": {
+            "description": "Invalid SRT or music selection."
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}/approve": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Post Approve",
+        "operationId": "post_approve_v1_jobs__job_id__approve_post",
+        "security": [
+          {
+            "APIKeyHeader": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApproveIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Reviewer credential missing or invalid."
+          },
+          "409": {
+            "description": "Stale revision, subtitle hash or music binding."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/jobs/{job_id}/reject": {
+      "post": {
+        "tags": [
+          "review"
+        ],
+        "summary": "Post Reject",
+        "operationId": "post_reject_v1_jobs__job_id__reject_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale revision or job is not awaiting review."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/assets": {
+      "post": {
+        "tags": [
+          "assets"
+        ],
+        "summary": "Upload Asset",
+        "operationId": "upload_asset_v1_assets_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_asset_v1_assets_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssetResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing rights confirmation, provenance or valid audio."
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/artifacts/{job_id}/{name}": {
+      "get": {
+        "tags": [
+          "artifacts"
+        ],
+        "summary": "Download Artifact",
+        "operationId": "download_artifact_v1_artifacts__job_id___name__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Job Id"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Name"
+            }
+          },
+          {
+            "name": "expires",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Expires"
+            }
+          },
+          {
+            "name": "sig",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sig"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "Signature invalid or expired."
+          },
+          "404": {
+            "description": "Artifact not found."
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ApproveIn": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "subtitle_sha256": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 64,
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Subtitle Sha256",
+            "description": "sha256 of the exact SRT revision shown to the human reviewer."
+          },
+          "music_asset_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{32}$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Music Asset Id"
+          },
+          "approval_id": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "pattern": "^[A-Za-z0-9._:-]+$",
+            "title": "Approval Id",
+            "description": "Idempotency key chosen by the human approval surface."
+          },
+          "approved_by": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 2,
+            "title": "Approved By",
+            "description": "Human reviewer name or ID."
+          },
+          "human_confirmed": {
+            "type": "boolean",
+            "title": "Human Confirmed",
+            "description": "Must be true. The reviewer credential is the technical gate."
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision",
+          "subtitle_sha256",
+          "approval_id",
+          "approved_by",
+          "human_confirmed"
+        ],
+        "title": "ApproveIn",
+        "example": {
+          "approval_id": "agento-review-1042",
+          "approved_by": "Producer A",
+          "human_confirmed": true,
+          "music_asset_id": "8f14e45fceea167a5a36dedd4bea2543",
+          "revision": 2,
+          "subtitle_sha256": "cf1a0b1d5c2b3f6e2f3c0d9a7b6e5f4a3c2b1d0e9f8a7b6c5d4e3f2a1b0c9d8e"
+        }
+      },
+      "ArtifactLink": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sha256"
+          },
+          "bytes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bytes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "url",
+          "content_type"
+        ],
+        "title": "ArtifactLink"
+      },
+      "AssetResponse": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance"
+          },
+          "attribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribution"
+          },
+          "rights_confirmed_by_creator": {
+            "type": "boolean",
+            "title": "Rights Confirmed By Creator"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "sha256",
+          "bytes",
+          "duration_s",
+          "provenance",
+          "rights_confirmed_by_creator",
+          "created_at"
+        ],
+        "title": "AssetResponse"
+      },
+      "Body_create_job_v1_jobs_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Authorized source video. Upload only."
+          },
+          "rights_confirmed": {
+            "type": "boolean",
+            "title": "Rights Confirmed",
+            "description": "Submitter confirms authorization to process the source clip."
+          },
+          "source_provenance": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Source Provenance",
+            "description": "Where the clip came from."
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "rights_confirmed",
+          "source_provenance"
+        ],
+        "title": "Body_create_job_v1_jobs_post"
+      },
+      "Body_create_upload_v1_uploads_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Authorized source video. Upload only."
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_create_upload_v1_uploads_post"
+      },
+      "Body_upload_asset_v1_assets_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Audio-only replacement music."
+          },
+          "rights_confirmed": {
+            "type": "boolean",
+            "title": "Rights Confirmed"
+          },
+          "provenance": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Provenance"
+          },
+          "attribution": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "rights_confirmed",
+          "provenance"
+        ],
+        "title": "Body_upload_asset_v1_assets_post"
+      },
+      "CueOut": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "start": {
+            "type": "number",
+            "title": "Start"
+          },
+          "end": {
+            "type": "number",
+            "title": "End"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "start",
+          "end",
+          "text"
+        ],
+        "title": "CueOut"
+      },
+      "ErrorOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "service": {
+            "type": "string",
+            "title": "Service"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "time": {
+            "type": "string",
+            "title": "Time"
+          },
+          "checks": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Checks"
+          },
+          "queue_depth": {
+            "type": "integer",
+            "title": "Queue Depth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "service",
+          "version",
+          "time",
+          "checks",
+          "queue_depth"
+        ],
+        "title": "HealthResponse"
+      },
+      "JobApproval": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "approval_id": {
+            "type": "string",
+            "title": "Approval Id"
+          },
+          "approved_by": {
+            "type": "string",
+            "title": "Approved By"
+          },
+          "approved_at": {
+            "type": "string",
+            "title": "Approved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision",
+          "approval_id",
+          "approved_by",
+          "approved_at"
+        ],
+        "title": "JobApproval"
+      },
+      "JobInput": {
+        "properties": {
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance"
+          },
+          "rights_confirmed_by_submitter": {
+            "type": "boolean",
+            "title": "Rights Confirmed By Submitter"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "sha256",
+          "bytes",
+          "duration_s",
+          "provenance",
+          "rights_confirmed_by_submitter"
+        ],
+        "title": "JobInput"
+      },
+      "JobMusic": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "title": "Asset Id"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "level_db": {
+            "type": "number",
+            "title": "Level Db"
+          },
+          "provenance": {
+            "type": "string",
+            "title": "Provenance"
+          },
+          "attribution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Attribution"
+          },
+          "rights_confirmed_by_creator": {
+            "type": "boolean",
+            "title": "Rights Confirmed By Creator"
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id",
+          "sha256",
+          "level_db",
+          "provenance",
+          "rights_confirmed_by_creator"
+        ],
+        "title": "JobMusic"
+      },
+      "JobRejection": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "rejected_at": {
+            "type": "string",
+            "title": "Rejected At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision",
+          "reason",
+          "rejected_at"
+        ],
+        "title": "JobRejection"
+      },
+      "JobResponse": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "title": "Job Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "revision": {
+            "type": "integer",
+            "title": "Revision"
+          },
+          "replayed": {
+            "type": "boolean",
+            "title": "Replayed",
+            "default": false
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "title": "Updated At"
+          },
+          "status_url": {
+            "type": "string",
+            "title": "Status Url"
+          },
+          "input": {
+            "$ref": "#/components/schemas/JobInput"
+          },
+          "subtitles": {
+            "$ref": "#/components/schemas/JobSubtitles"
+          },
+          "music": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobMusic"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "approval": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobApproval"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rejection": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobRejection"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/WarningOut"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "artifacts": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ArtifactLink"
+            },
+            "type": "object",
+            "title": "Artifacts"
+          },
+          "retention_days": {
+            "type": "integer",
+            "title": "Retention Days"
+          },
+          "expires_at": {
+            "type": "string",
+            "title": "Expires At"
+          },
+          "timings_ms": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Timings Ms"
+          },
+          "processing_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processing Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "status",
+          "revision",
+          "created_at",
+          "updated_at",
+          "status_url",
+          "input",
+          "subtitles",
+          "warnings",
+          "artifacts",
+          "retention_days",
+          "expires_at"
+        ],
+        "title": "JobResponse"
+      },
+      "JobSubtitles": {
+        "properties": {
+          "srt": {
+            "type": "string",
+            "title": "Srt"
+          },
+          "vtt": {
+            "type": "string",
+            "title": "Vtt"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "cues": {
+            "items": {
+              "$ref": "#/components/schemas/CueOut"
+            },
+            "type": "array",
+            "title": "Cues"
+          },
+          "editable": {
+            "type": "boolean",
+            "title": "Editable",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "srt",
+          "vtt",
+          "sha256",
+          "cues"
+        ],
+        "title": "JobSubtitles"
+      },
+      "MusicSelectionIn": {
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 32,
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Asset Id"
+          },
+          "level_db": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": -6.0,
+                "minimum": -40.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level Db",
+            "description": "Music gain before ducking, in dB relative to the source music level. Defaults to the service setting (-18 dB)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "asset_id"
+        ],
+        "title": "MusicSelectionIn"
+      },
+      "RejectIn": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 3,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision",
+          "reason"
+        ],
+        "title": "RejectIn"
+      },
+      "ReviewIn": {
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Revision",
+            "description": "Current job revision. A mismatch returns 409."
+          },
+          "subtitles_srt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitles Srt",
+            "description": "Complete corrected SRT. Omit to keep the current subtitles."
+          },
+          "music": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MusicSelectionIn"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Replacement music selection. Omit to keep the current selection; send null to remove music from the revision."
+          }
+        },
+        "type": "object",
+        "required": [
+          "revision"
+        ],
+        "title": "ReviewIn",
+        "example": {
+          "music": {
+            "asset_id": "8f14e45fceea167a5a36dedd4bea2543",
+            "level_db": -18
+          },
+          "revision": 1,
+          "subtitles_srt": "1\n00:00:04,000 --> 00:00:08,200\nYou recorded a video, but a song is playing in the background.\n"
+        }
+      },
+      "SubmitJobIn": {
+        "properties": {
+          "upload_id": {
+            "type": "string",
+            "maxLength": 32,
+            "minLength": 32,
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Upload Id",
+            "description": "Opaque ID returned by POST /v1/uploads."
+          },
+          "rights_confirmed": {
+            "type": "boolean",
+            "title": "Rights Confirmed",
+            "description": "Submitter confirms authorization to process the source clip."
+          },
+          "source_provenance": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 5,
+            "title": "Source Provenance",
+            "description": "Where the clip came from."
+          }
+        },
+        "type": "object",
+        "required": [
+          "upload_id",
+          "rights_confirmed",
+          "source_provenance"
+        ],
+        "title": "SubmitJobIn",
+        "example": {
+          "rights_confirmed": true,
+          "source_provenance": "Creator-owned restaurant footage",
+          "upload_id": "9b3d1f0b6c2a4e5f8a7d0c1b2e3f4a5b"
+        }
+      },
+      "UploadResponse": {
+        "properties": {
+          "upload_id": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{32}$",
+            "title": "Upload Id"
+          },
+          "sha256": {
+            "type": "string",
+            "title": "Sha256"
+          },
+          "bytes": {
+            "type": "integer",
+            "title": "Bytes"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "content_type": {
+            "type": "string",
+            "title": "Content Type"
+          },
+          "duration_s": {
+            "type": "number",
+            "title": "Duration S"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Width"
+          },
+          "height": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Height"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "expires_at": {
+            "type": "string",
+            "title": "Expires At"
+          },
+          "submit_url": {
+            "type": "string",
+            "title": "Submit Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "upload_id",
+          "sha256",
+          "bytes",
+          "filename",
+          "content_type",
+          "duration_s",
+          "created_at",
+          "expires_at",
+          "submit_url"
+        ],
+        "title": "UploadResponse",
+        "example": {
+          "bytes": 1986228,
+          "content_type": "video/mp4",
+          "created_at": "2026-11-02T20:10:00Z",
+          "duration_s": 18.0,
+          "expires_at": "2026-11-03T20:10:00Z",
+          "filename": "clip.mp4",
+          "height": 360,
+          "sha256": "4cab1bad7c678bb3ff2b0c7c6f07414cb56f65768931f8f52f0e3b4ecff48c85",
+          "submit_url": "https://keepvoice.yablokolabs.com/v1/jobs/from-upload",
+          "upload_id": "9b3d1f0b6c2a4e5f8a7d0c1b2e3f4a5b",
+          "width": 640
+        }
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WarningOut": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "title": "WarningOut"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "description": "Agent credential issued to Agento. It cannot approve a revision.",
+        "scheme": "bearer"
+      },
+      "APIKeyHeader": {
+        "type": "apiKey",
+        "description": "Credential held only by the human review surface. It is required to approve an exact revision and must never be given to the planning agent.",
+        "in": "header",
+        "name": "X-Reviewer-Token"
+      }
+    }
+  }
+}
