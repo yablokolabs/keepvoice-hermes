@@ -4,7 +4,7 @@ Open the checkout and read `docs/PROGRESS.md`. Inspect Git status, the latest
 commit and local diffs. Resume the first incomplete milestone.
 
 The plugin is implemented and validated at commit
-`74dc0a0b9e13440fa2c3ba67f4077d3e22fd203a`, which is the SHA pinned in
+`f1d93aa2b62b60b6f0f168f95cc60d85cdffcbda`, which is the SHA pinned in
 `submission/keepvoice-hermes.yaml`. Re-run the checks if the code moved:
 
 ```bash
