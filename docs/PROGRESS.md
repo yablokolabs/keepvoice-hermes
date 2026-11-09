@@ -192,3 +192,18 @@ recording the handler-guard change and the re-run checks.
 - The catalog entry still pins `f75d546`; this change only affects docs and
   where the video is hosted, so it does not change the submitted plugin code.
 
+### 2026-11-09 — demo video moved to a release asset
+
+- Published `v0.1.0` with `keepvoice-hermes-demo.mp4` (33,992,719 bytes) as its
+  only asset; the tag points at `be2288d`, the current tip of `master`.
+- Rewrote the tip commit so the 34 MB video never sits in Git history: the tree
+  carries the README link only, and the branch was force-pushed with
+  `--force-with-lease` (`7ffa5e9...be2288d master -> master (forced update)`),
+  then reflogs were expired and packed objects pruned locally.
+- Checks: asset GET returns `200` with 33,992,719 bytes and SHA-256
+  `507340fab2b74c3f1a7b824e09b3aed8c1de6bdfd348306c03869e5a10ae4d9b`, matching
+  the local render; a fresh clone of `master` is 240 KB with zero tracked `.mp4`
+  files; `git log --all -- docs/demo` is empty; `gh api .../readme` shows the
+  release link.
+- The catalog entry still pins `f75d546`, which predates the rewrite and is
+  untouched by it, so the submitted plugin code is unchanged.
