@@ -7,6 +7,25 @@ final video only after the creator approves the current revision.
 KeepVoice does the media work and owns the review. This plugin adds three tools
 and an export gate; it does not process audio, edit subtitles or approve a cut.
 
+## Demo
+
+A 79-second narrated walkthrough is attached to the
+[`v0.1.0` release](https://github.com/yablokolabs/keepvoice-hermes/releases/tag/v0.1.0):
+[watch the demo](https://github.com/yablokolabs/keepvoice-hermes/releases/download/v0.1.0/keepvoice-hermes-demo.mp4)
+(1920x1080, 30 fps, H.264 + AAC, 34 MB). It is a release asset rather than a
+committed file, so cloned checkouts stay small.
+
+It opens on the problem this plugin exists for: music from a cafe, a shop or a
+passing car lands in the vlog, and the upload comes back as a copyright claim.
+Then it shows the agent/reviewer split, how the agent token is minted and
+resolved, an ordinary `hermes plugins install` session, the real review page and
+catalog PR, and the export gate that fails closed.
+
+The job card, terminal output and session panels are illustrative. The KeepVoice
+review page and the GitHub PR are real captures of this service and this
+submission. No token, reviewer credential or signed artifact URL appears in the
+video.
+
 ## Requirements
 
 - Hermes Agent **0.23.0 or newer** (validated against 0.23.0).

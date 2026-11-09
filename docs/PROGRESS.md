@@ -161,3 +161,34 @@ plugin has no Python dependencies or media processing. The MIT notice from
 The catalog entry was re-pinned to `f75d546aeb42d84c3a2c5cfc95e2e013bf724c47`
 in the same PR (a revision, not a post-merge SHA bump), with a PR comment
 recording the handler-guard change and the re-run checks.
+
+### 2026-11-09 — demo video
+
+- Built `keepvoice-hermes` demo in `~/remotion-video-skill/projects/keepvoice-demo`: 1920x1080, 30 fps, 70.677 s, H.264 + AAC stereo, 30.2 MB at `out/video.mp4`.
+- Seven scenes: hook, split, credential (`init-secrets`, 0600 files, SHA-256 digest compare), usage (`hermes plugins install keepvoice-hermes` then submit -> needs_review -> `approval_missing`), real pages, export gate, outro.
+- Real page captures via moli `fetch --layout --dump screenshot_full` (review page, catalog PR #151759). No live job was run and none is shown.
+- Voice: local piper `en_GB-cori-high` (British female). ElevenLabs free tier returned HTTP 402 for the young British voices and had ~93/10,000 characters left, so nothing was spent there.
+- Checks: `npx tsc -p .` exit 0; stills reviewed in four batches; `ffprobe` 70.677 s with video+audio; `volumedetect` mean -18.4 dB overall, speech present in the usage and outro windows.
+- Next: optional live job with consent, then swap the narration for a hosted young British voice if the plan allows it.
+
+### 2026-11-09 — demo video opens on the problem
+
+- The demo now starts with the pain point instead of the product: café, shop and
+  passing-car music in a vlog, the resulting copyright claim, revenue held.
+- New opening scene `Pain` (0.0–8.8 s); the promise, split, credential, usage,
+  real surfaces, export gate and outro follow. Total 79.445 s, 1920x1080, 30 fps,
+  34 MB, H.264 + AAC stereo at `~/remotion-video-skill/projects/keepvoice-demo/out/video.mp4`.
+- Checks: `npx tsc -p .` exit 0; stills reviewed; `ffprobe` 79.445 s with both
+  streams; `volumedetect` mean -18.4 dB overall and -19.8 dB over 0-8 s, so the
+  opening line is present.
+
+### 2026-11-09 — demo video is linked from the README
+
+- Published the demo (79.445 s, 1920x1080, 30 fps, H.264 + AAC, 34 MB) as the
+  `v0.1.0` release asset `keepvoice-hermes-demo.mp4` and linked it from a Demo
+  section in the README. It is not committed, so a clone stays small.
+- The README states which panels are illustrative and which captures are real,
+  so the video cannot be read as proof of a live end-to-end job.
+- The catalog entry still pins `f75d546`; this change only affects docs and
+  where the video is hosted, so it does not change the submitted plugin code.
+
