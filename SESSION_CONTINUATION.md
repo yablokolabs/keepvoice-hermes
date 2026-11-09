@@ -25,3 +25,7 @@ Checkpoint after each milestone or 30 minutes: date/time, commit, commands and
 results, job state (redacted), blockers and one concrete next action. Store no
 credentials, signed artifact URLs or private transcripts. Session memory uses the
 Hindsight bank `keepvoice-hermes` with sanitized notes only.
+
+Catalog PR opened: https://github.com/NousResearch/hermes-agent/pull/151759
+(entry pinned to b4cff770eee08ebabab70bcfb5b5b90ec8fd4816). Remaining: wait for
+catalog CI and maintainer review, and run the consented live job.
