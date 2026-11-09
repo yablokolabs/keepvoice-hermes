@@ -121,4 +121,10 @@ plugin has no Python dependencies or media processing. The MIT notice from
   `auth_failed`. The same token over `curl` returned 404.
 - Fix: every request now sends `User-Agent: keepvoice-hermes/0.1.0`
   (`client.py`), with `test_requests_send_a_stable_user_agent` covering it.
+- Session after the fix (`--ref f1d93aa2b62b60b6f0f168f95cc60d85cdffcbda`):
+  `hermes -z "Call keepvoice_status exactly once with job_id 000…0"` returned
+  `{"code": "job_not_found", "ok": false, ...}` for the all-zero job ID. That
+  reply proves profile secret resolution, the User-Agent, the Cloudflare edge
+  and the fixed `GET /v1/jobs/<job_id>` route all work end to end; only a real
+  job ID is missing.
 - Nothing was submitted or approved and no artifact was fetched in this step.
