@@ -61,7 +61,7 @@ wrong-route link shapes, and public-session withholding.
 
 - Installed from the public repo at the pinned SHA:
   `hermes plugins install yablokolabs/keepvoice-hermes --ref 74dc0a0b9e13440fa2c3ba67f4077d3e22fd203a --enable --yes-deps`.
-  `hermes plugins list --plain` shows `enabled git pinned@82a88af2 0.1.0 keepvoice-hermes`.
+  `hermes plugins list --plain` shows `enabled git pinned@74dc0a0b 0.1.0 keepvoice-hermes`.
 - One-shot session:
   `hermes -z "Call the keepvoice_status tool exactly once with job_id test-job and report the JSON result verbatim."`
   The model invoked the registered tool; the returned payload was
@@ -104,3 +104,21 @@ healthy):
 Reuse remains contract-level. No service source is copied or vendored, and the
 plugin has no Python dependencies or media processing. The MIT notice from
 `yablokolabs/keepvoice` is carried in `LICENSE`.
+
+### 2026-11-09 — credential wired, Cloudflare edge fix
+
+- `KEEPVOICE_AGENT_TOKEN` was not present in either profile `.env`
+  (`~/.hermes/.env`, `~/.hermes/profiles/polaris/.env`). The active profile is
+  the default one (`hermes config env-path` → `/home/azureuser/.hermes/.env`).
+  Wrote the agent token from the service's own secret store
+  (`data/secrets/agent_token`, mode 0600) into that `.env` without printing the
+  value.
+- Read-only proof the credential is valid: `GET /v1/jobs/<unknown>` with the
+  token → 404 `job_not_found`; without it → 401.
+- The first session after wiring still returned `auth_failed`. Root cause: the
+  Cloudflare edge answers the stdlib default `Python-urllib/3.14` User-Agent
+  with HTTP 403, Cloudflare Error 1010, which `client.py` mapped to
+  `auth_failed`. The same token over `curl` returned 404.
+- Fix: every request now sends `User-Agent: keepvoice-hermes/0.1.0`
+  (`client.py`), with `test_requests_send_a_stable_user_agent` covering it.
+- Nothing was submitted or approved and no artifact was fetched in this step.

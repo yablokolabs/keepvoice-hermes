@@ -100,7 +100,10 @@ Catalog rule 13 disclosures for what this plugin actually does:
   host is a constant in `client.py`; there is no user-configurable endpoint.
   Redirects are disabled, so the bearer cannot follow a `3xx` to another host.
   Each request has a 15-second default timeout (30-second cap) and each response
-  is capped at 256 KiB. The plugin never fetches the signed artifact link.
+  is capped at 256 KiB. Requests carry a stable `keepvoice-hermes/0.1.0`
+  User-Agent: the service's Cloudflare edge rejects the default `Python-urllib`
+  agent with Error 1010, which would otherwise look like a credential failure.
+  The plugin never fetches the signed artifact link.
 - **Data sent.** The agent bearer token in the `Authorization` header, the upload
   ID, rights confirmation, provenance text, the job ID, and the idempotency key.
   No clip bytes, transcripts or subtitles leave Hermes through this plugin.

@@ -20,6 +20,10 @@ from typing import Any, Mapping, Optional
 BASE_URL = "https://keepvoice.yablokolabs.com"
 API_HOST = "keepvoice.yablokolabs.com"
 REVIEW_URL = BASE_URL + "/review"
+# The service sits behind a Cloudflare edge that answers the default
+# ``Python-urllib`` agent with Error 1010 (403). Send a stable, honest agent
+# instead of letting the stdlib default decide whether requests are served.
+USER_AGENT = "keepvoice-hermes/0.1.0"
 
 SUBMIT_PATH = "/v1/jobs/from-upload"
 _JOB_PATH_PREFIX = "/v1/jobs/"
@@ -128,6 +132,7 @@ def request_json(
 
     request = urllib.request.Request(BASE_URL + path, data=data, method=method)
     request.add_header("Accept", "application/json")
+    request.add_header("User-Agent", USER_AGENT)
     if data is not None:
         request.add_header("Content-Type", "application/json")
     if idempotency_key:

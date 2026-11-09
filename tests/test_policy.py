@@ -390,6 +390,15 @@ class ClientChecks(unittest.TestCase):
             client.request_json("GET", f"/v1/jobs/{JOB_ID}", token=TOKEN, opener=opener)
         self.assertEqual(caught.exception.code, "invalid_response")
 
+    def test_requests_send_a_stable_user_agent(self):
+        # The service's Cloudflare edge rejects the default Python-urllib agent
+        # with Error 1010, which would surface as a misleading auth_failed.
+        opener = FakeOpener(FakeResponse(200, job()))
+        client.request_json("GET", f"/v1/jobs/{JOB_ID}", token=TOKEN, opener=opener)
+        sent = opener.requests[0].get_header("User-agent") or ""
+        self.assertEqual(sent, client.USER_AGENT)
+        self.assertNotIn("python-urllib", sent.lower())
+
     def test_only_fixed_routes_are_reachable(self):
         opener = FakeOpener()
         for path in ("https://evil.example/x", "/v1/assets", f"/v1/jobs/{JOB_ID}/approve", "/v1/jobs/a/b"):
