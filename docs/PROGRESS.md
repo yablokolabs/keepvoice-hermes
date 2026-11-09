@@ -157,3 +157,7 @@ plugin has no Python dependencies or media processing. The MIT notice from
   `internal_error` JSON payload with a recovery action; the regression is
   covered in `tests/test_policy.py`.
 - Re-ran the suite, Doctor and `hermes plugins validate --install-deps`.
+
+The catalog entry was re-pinned to `f75d546aeb42d84c3a2c5cfc95e2e013bf724c47`
+in the same PR (a revision, not a post-merge SHA bump), with a PR comment
+recording the handler-guard change and the re-run checks.
