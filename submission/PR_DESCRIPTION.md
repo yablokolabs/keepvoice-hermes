@@ -38,10 +38,10 @@ dependencies and does no media processing. It carries the same MIT notice
 
 ## Validation
 
-Run at the pinned SHA on Hermes 0.23.0:
+Run at the pinned SHA (`b4cff77`) on Hermes 0.23.0:
 
 ```
-python3 -m unittest discover -s tests -v   # 30 tests, OK
+python3 -m unittest discover -s tests -v   # 32 tests, OK
 hermes plugins doctor . --ci               # exit 0, 3 tools, 0 hooks
 hermes plugins validate . --install-deps    # Validation passed, security scan safe
 ```
