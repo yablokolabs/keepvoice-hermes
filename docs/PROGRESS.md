@@ -147,3 +147,13 @@ plugin has no Python dependencies or media processing. The MIT notice from
   which is GitHub's approval gate for fork pull requests; the PR shows no checks
   until a maintainer approves the run. The consented live job is still
   outstanding.
+
+### 2026-11-09 — handler guard for the plugin guide
+
+- The guide's handler rules require every tool handler to return a JSON string
+  and never raise. `__init__.py` only caught `client.ClientError`, so an
+  unexpected exception could escape into the Hermes dispatcher.
+- Each registered handler now catches `Exception` and returns a stable
+  `internal_error` JSON payload with a recovery action; the regression is
+  covered in `tests/test_policy.py`.
+- Re-ran the suite, Doctor and `hermes plugins validate --install-deps`.

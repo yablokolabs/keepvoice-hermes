@@ -443,6 +443,28 @@ class HandlerChecks(unittest.TestCase):
         result = json.loads(registered["keepvoice_status"]["handler"]({"job_id": "bad/id"}))
         self.assertEqual(result["code"], "invalid_job_id")
 
+        # The plugin guide requires handlers to return JSON and never raise.
+        original = module.tools.submit
+
+        def _boom(**_kwargs):
+            raise RuntimeError("boom")
+
+        module.tools.submit = _boom
+        try:
+            result = json.loads(
+                registered["keepvoice_submit"]["handler"](
+                    {
+                        "upload_id": UPLOAD_ID,
+                        "rights_confirmed": True,
+                        "source_provenance": "Creator-owned clip",
+                    }
+                )
+            )
+        finally:
+            module.tools.submit = original
+        self.assertEqual(result["code"], "internal_error")
+        self.assertFalse(result["ok"])
+
 
 if __name__ == "__main__":
     unittest.main()

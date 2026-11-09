@@ -14,6 +14,21 @@ from . import tools
 
 TOOLSET = "keepvoice"
 
+# Hermes handlers must always return a JSON string and never raise (plugin guide,
+# "Key rules for handlers"). Anything unforeseen becomes a stable code here.
+_UNEXPECTED_JSON = json.dumps(
+    {
+        "ok": False,
+        "code": "internal_error",
+        "message": "The KeepVoice plugin hit an unexpected error and returned no result.",
+        "recovery": (
+            "Retry once. If it persists, check the job in KeepVoice and report the failure; "
+            "no artifact was released."
+        ),
+    },
+    sort_keys=True,
+)
+
 SUBMIT_SCHEMA = {
     "name": "keepvoice_submit",
     "description": (
@@ -89,29 +104,40 @@ def register(ctx):
         return args if isinstance(args, dict) else {}
 
     def keepvoice_submit(args, **_kwargs) -> str:
-        values = _arguments(args)
-        return tools.as_json(
-            tools.submit(
-                token=tools.agent_token(),
-                upload_id=values.get("upload_id"),
-                rights_confirmed=values.get("rights_confirmed"),
-                source_provenance=values.get("source_provenance"),
+        try:
+            values = _arguments(args)
+            return tools.as_json(
+                tools.submit(
+                    token=tools.agent_token(),
+                    upload_id=values.get("upload_id"),
+                    rights_confirmed=values.get("rights_confirmed"),
+                    source_provenance=values.get("source_provenance"),
+                )
             )
-        )
+        except Exception:
+            return _UNEXPECTED_JSON
 
     def keepvoice_status(args, **_kwargs) -> str:
-        values = _arguments(args)
-        return tools.as_json(tools.status(token=tools.agent_token(), job_id=values.get("job_id")))
+        try:
+            values = _arguments(args)
+            return tools.as_json(
+                tools.status(token=tools.agent_token(), job_id=values.get("job_id"))
+            )
+        except Exception:
+            return _UNEXPECTED_JSON
 
     def keepvoice_export(args, **_kwargs) -> str:
-        values = _arguments(args)
         try:
-            surface = str(ctx.session_surface())
+            values = _arguments(args)
+            try:
+                surface = str(ctx.session_surface())
+            except Exception:
+                surface = ""
+            return tools.as_json(
+                tools.export(token=tools.agent_token(), job_id=values.get("job_id"), surface=surface)
+            )
         except Exception:
-            surface = ""
-        return tools.as_json(
-            tools.export(token=tools.agent_token(), job_id=values.get("job_id"), surface=surface)
-        )
+            return _UNEXPECTED_JSON
 
     ctx.register_tool(
         name="keepvoice_submit",
