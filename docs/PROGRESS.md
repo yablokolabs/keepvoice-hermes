@@ -140,5 +140,10 @@ plugin has no Python dependencies or media processing. The MIT notice from
 - The PR diff is exactly that one added file, per the submission guide. The
   pinned tree passed locally: 32 tests OK, `hermes plugins doctor . --ci` exit 0,
   `hermes plugins validate . --install-deps` `Validation passed.`
-- Not yet verified: the catalog CI check had not reported on the branch when the
-  PR was opened, and the consented live job is still outstanding.
+- Ran the repository's own structural gate locally (fetched
+  `scripts/validate_plugin_catalog.py`, installed its pinned `ruamel.yaml`
+  `0.18.17` in a throwaway venv): `OK: 1 file(s) valid`.
+- The `Plugin Catalog CI` run for the branch is `action_required` with no jobs,
+  which is GitHub's approval gate for fork pull requests; the PR shows no checks
+  until a maintainer approves the run. The consented live job is still
+  outstanding.
